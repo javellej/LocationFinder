@@ -46,8 +46,7 @@ int retrieveArguments( int i_argc, char **i_argv, int *o_longitude, int *o_latit
     return 0;
 }
 
-int main( int argc, char **argv)
-{
+int main( int argc, char **argv) {
     int retCode;
 
     CURL *curl;
@@ -63,20 +62,23 @@ int main( int argc, char **argv)
     int numCandidates = 0;
     int i;
 
-    /* get command arguments */
+    // get command arguments
     CHECK( retrieveArguments( argc-1, argv+1, &(start.m_longitude), &(start.m_latitude)));
     printf( "lon %d, lat %d\n", start.m_longitude, start.m_latitude);
 
-    /* initialize curl */
+    // initialize curl
     curl = curl_easy_init();
     if ( curl == NULL ) { CHECK( ERROR_CURL_INITIALIZE); }
 
-    /* find several candidates for good locations */
+    // get map centered on input point
+    CHECK( getMap( curl, start));
+
+    /*
+    // find several candidates for good locations
     //srand( time( NULL));
-    for ( i=0; i<NUMPOINTS; i++ )
-    {
-        int r_lat = ( rand() % (2*maxRadius) ) - maxRadius;
-        int r_lon = ( rand() % (2*maxRadius) ) - maxRadius;
+    for ( i=0; i<NUMPOINTS; i++ ) {
+        int r_lat = ( rand() % (2 * maxRadius) ) - maxRadius;
+        int r_lon = ( rand() % (2 * maxRadius) ) - maxRadius;
         end.m_latitude = start.m_latitude + r_lat;
         end.m_longitude = start.m_longitude + r_lon;
         CHECK( getDistance( curl, start, end, &distance_m, &time_s));
@@ -84,18 +86,18 @@ int main( int argc, char **argv)
         printf( "step %d : distance %d m, time %d s\n", i, distance_m, time_s);
 #endif
 //        if ( distance_m < maxDistance )
-        if ( time_s < maxTime )
-        {
+        if ( time_s < maxTime ) {
             candidates[numCandidates++] = end;
         }
     }
     printf( "num candidates : %d\n", numCandidates);
 
-    /* compute convex hull */
-    CHECK( convexHull( candidates, numCandidates, &convexHullCandidates, &numVertices));
+    // compute convex hull
+    //CHECK( convexHull( candidates, numCandidates, &convexHullCandidates, &numVertices));
 
-    /* get corresponding map */
-    CHECK( getAreaMap( curl, start, convexHullCandidates, numVertices));
+    // get corresponding map
+    //CHECK( getAreaMap( curl, start, convexHullCandidates, numVertices));
+    */
 
     /* cleanup curl */ 
     curl_easy_cleanup( curl);

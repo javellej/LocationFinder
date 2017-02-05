@@ -5,8 +5,7 @@
 #include "error.h"
 
 /* callback used by curl to write data from a webpage into a structure */
-size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_dstBuffer)
-{
+size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_dstBuffer) {
     int size = i_size*i_nmemb;
     t_buffer dstBuffer = *io_dstBuffer;
 
@@ -29,8 +28,7 @@ size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_
 }
 
 /* PRE : "curl_easy_init" has been called */
-int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, int *o_time)
-{
+int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, int *o_time) {
     int retCode;
 
     int curlRetCode;
@@ -93,8 +91,37 @@ ERROR:
     return retCode;
 }
 
-int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVertices)
-{
+/*
+ * retrieve map centered on the given point
+ */
+int getMap( CURL *i_curl, t_point i_center) {
+    int retCode;
+    FILE *f = fopen( "simple_map.png", "w");
+    char query_url[512];
+
+    memset( query_url, 0, 512*sizeof( char));
+
+    // get query string
+    pointQuery( i_center, query_url);
+    printf( "map query : %s\n", query_url);
+
+    // get map centered on input point
+    CHECK( curl_easy_setopt( i_curl, CURLOPT_URL, query_url));
+    CHECK( curl_easy_setopt( i_curl, CURLOPT_FOLLOWLOCATION, 1L));
+    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEFUNCTION, NULL));
+    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, f));
+    CHECK( curl_easy_perform( i_curl));
+
+    return 0;
+
+ERROR:
+    return retCode;
+}
+
+/*
+ * retrieve map centered on the requested point with a highlighted polygonal area
+ */
+int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVertices) {
     int retCode;
     FILE *f = fopen( "map.png", "w");
     char *queryUrl = (char *) malloc( 205+26*(i_numVertices+1));
@@ -123,15 +150,13 @@ ERROR:
 }
 
 /* evaluation function for sort : monotonic according to angles */
-int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value)
-{
+int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value) {
     float value;
     float adj = (float) i_pointToEval.m_longitude - i_refPoint.m_longitude;
     float opp = (float) i_pointToEval.m_latitude - i_refPoint.m_latitude;
     float hyp2 = adj*adj + opp*opp;
 
-    if ( !hyp2 ) /* same point */
-    {
+    if ( !hyp2 ) /* same point */ {
         value = 0;
     } else {
         value = adj*adj / hyp2;
@@ -147,8 +172,7 @@ int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value)
 }
 
 /* in place quicksort of an array of points according to angle with  */
-int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint)
-{
+int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint) {
     int i;
     int pivotFinalIndex = 0;
     float pivotValue, currValue;
@@ -158,11 +182,9 @@ int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint)
 
     /* place elements according to pivot */
     evalPoint( i_points[0], i_refPoint, &pivotValue);
-    for ( i=1; i<i_numPoints; i++ )
-    {
+    for ( i=1; i<i_numPoints; i++ ) {
         evalPoint( i_points[i], i_refPoint, &currValue);
-        if ( currValue < pivotValue )
-        {
+        if ( currValue < pivotValue ) {
             swapPoints( i_points, i, ++pivotFinalIndex);
         }
     }
@@ -180,8 +202,7 @@ int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint)
 /* Graham scan
  * IN : array of "t_points"
  * OUT : arry of "t_point" that form the convex hull polygon */
-int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int *o_numVertices)
-{
+int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int *o_numVertices) {
     int retCode;
     int lowLatIndex = 0;
     char *hullPoints;
@@ -201,10 +222,8 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     }
 
     /* step 1 : find element that is on convex hull -> lower latitude */
-    for ( i=0; i<i_numPoints; i++ )
-    {
-        if ( i_points[i].m_latitude < i_points[lowLatIndex].m_latitude )
-        {
+    for ( i=0; i<i_numPoints; i++ ) {
+        if ( i_points[i].m_latitude < i_points[lowLatIndex].m_latitude ) {
             lowLatIndex = i;
         }
     }
@@ -219,8 +238,7 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     hullPoints[0] = 1;
     hullPoints[i_numPoints-1] = 1;
     prev = 0;
-    for ( i=1; i<i_numPoints-1; i++ )
-    {
+    for ( i=1; i<i_numPoints-1; i++ ) {
         long long xA = (long long) i_points[prev].m_longitude;
         long long yA = (long long) i_points[prev].m_latitude;
         long long xB = (long long) i_points[i+1].m_longitude;
@@ -229,8 +247,7 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
         long long yCurr = (long long) i_points[i].m_latitude;
         long long eval = (xA-xCurr)*(yB-yCurr) - (xB-xCurr)*(yA-yCurr);
         printf( "eval : %lld\n", eval);
-        if ( eval < 0 ) /* add point to convex hull */
-        {
+        if ( eval < 0 ) {/* add point to convex hull */
             hullPoints[i] = 1;
             hullSize++;
             prev = i;
@@ -238,10 +255,8 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     }
     /*  build convex hull array */
     convexHull = (t_point *) malloc( hullSize*sizeof( t_point));
-    for ( i=0; i<i_numPoints; i++ )
-    {
-        if ( hullPoints[i] )
-        {
+    for ( i=0; i<i_numPoints; i++ ) {
+        if ( hullPoints[i] ) {
             convexHull[hullIndex++] = i_points[i];
         }
     }
