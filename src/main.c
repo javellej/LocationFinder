@@ -3,6 +3,7 @@
 #include <curl/curl.h>
 #include <time.h>
 
+#include "image.h"
 #include "structs.h"
 #include "tools.h"
 #include "error.h"
@@ -62,6 +63,7 @@ int main( int argc, char **argv) {
     int numVertices = 0;
     int numCandidates = 0;
     int i;
+    char errorMessage[512] = {0};
 
     // get command arguments
     CHECK( retrieveArguments( argc-1, argv+1, &(start.m_longitude), &(start.m_latitude)));
@@ -100,11 +102,17 @@ int main( int argc, char **argv) {
     //CHECK( getAreaMap( curl, start, convexHullCandidates, numVertices));
     */
 
-    /* cleanup curl */ 
+    // cleanup curl
     curl_easy_cleanup( curl);
+
+    // test png read write
+    t_rgb_image image;
+    CHECK( pngToRgb( "simple_map.png", &image));
+    CHECK( rgbToPng( image, "simple_map_2.png"));
     return 0;
 
 ERROR:
-    printf( "Error detected -> code %d\n", retCode);
+    errCodeToMessage( retCode, errorMessage);
+    printf( "Error detected -> code %d : %s\n", retCode, errorMessage);
     return retCode;
 }

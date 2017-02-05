@@ -113,6 +113,8 @@ int getMap( CURL *i_curl, t_point i_center) {
     CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, f));
     CHECK( curl_easy_perform( i_curl));
 
+    fclose( f);
+
     return 0;
 
 ERROR:
@@ -143,6 +145,8 @@ int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVer
     /* free memory */
     free( queryUrl);
     queryUrl = NULL;
+
+    fclose( f);
 
     return 0;
 
