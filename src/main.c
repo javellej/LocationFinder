@@ -6,6 +6,7 @@
 #include "structs.h"
 #include "tools.h"
 #include "error.h"
+#include "definitions.h"
 
 int printUsage( )
 {

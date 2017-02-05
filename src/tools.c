@@ -1,8 +1,9 @@
-#include <string.h>
-#include <curl/curl.h>
 #include "tools.h"
 #include "query.h"
 #include "error.h"
+#include "definitions.h"
+#include <curl/curl.h>
+#include <string.h>
 
 /* callback used by curl to write data from a webpage into a structure */
 size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_dstBuffer) {
