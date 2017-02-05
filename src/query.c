@@ -16,7 +16,23 @@ int coordToStr( int i_coord, char *io_string)
     return 0;
 }
 
-/* output query string to google maps
+/*
+ * output query URL for single point
+ * PRE : the query string "o_query" is already allocated
+ */
+int pointQuery( t_point i_center, char *o_query) {
+   char latitude_str[16]; 
+   char longitude_str[16]; 
+
+    coordToStr( i_center.m_latitude, latitude_str);
+    coordToStr( i_center.m_longitude, longitude_str);
+    sprintf( o_query, "http://www.google.com/maps/api/staticmap?center=%s,%s&size=600x600&zoom=10", latitude_str, longitude_str);
+
+    return 0;
+}
+
+/* 
+ * output query string to google maps
  * PRE : the query string "o_query" is already allocated
  */
 int directionQuery( t_point i_start, t_point i_end, char *o_query)
