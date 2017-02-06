@@ -125,3 +125,33 @@ int rgbToPng( t_rgb_image i_image, char *png_file_name) {
 ERROR:
     return retCode;
 }
+
+/*
+ * add an overlay to an existing image
+ * the overlay acts like a semi-transparent mask
+ */
+int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
+    int retCode;
+    int i, j;
+
+    // check dimensions
+    if ( ( io_image.width != i_overlay.width ) ||
+         ( io_image.height != i_overlay.height ) ) {
+        CHECK( ERROR_DIMENSIONS);
+    }
+
+    // add stronger blue component to pixels when overlay pixel is present
+    for ( i=0; i<io_image.height; i++ ) {
+        for ( j=0; j<io_image.width; j++ ) {
+            unsigned char new_blue_component = ( 0xff + io_image.pixels[i][j].B ) << 1;
+            if ( i_overlay.overlay[i][j] ) {
+               io_image.pixels[i][j].B = new_blue_component;
+            }
+        }
+    } 
+
+    return 0;
+
+ERROR:
+    return retCode;
+}

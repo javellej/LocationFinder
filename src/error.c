@@ -41,6 +41,9 @@ int errCodeToMessage( int i_errCode, char *o_message)
         case ERROR_BIT_DEPTH:
             sprintf( o_message, "only supported bit depth is 8");
             break;
+        case ERROR_DIMENSIONS:
+            sprintf( o_message, "wrong dimensions");
+            break;
     }
     return 0;
 }

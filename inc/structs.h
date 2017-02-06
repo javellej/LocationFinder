@@ -25,4 +25,10 @@ typedef struct {
     t_pixel **pixels;
 }t_rgb_image;
 
+typedef struct {
+    int width;
+    int height;
+    unsigned char **overlay;
+}t_overlay;
+
 #endif

@@ -62,8 +62,9 @@ int main( int argc, char **argv) {
     t_point *convexHullCandidates = NULL;
     int numVertices = 0;
     int numCandidates = 0;
-    int i;
+    int i, j;
     char errorMessage[512] = {0};
+    t_overlay overlay;
 
     // get command arguments
     CHECK( retrieveArguments( argc-1, argv+1, &(start.m_longitude), &(start.m_latitude)));
@@ -105,9 +106,21 @@ int main( int argc, char **argv) {
     // cleanup curl
     curl_easy_cleanup( curl);
 
-    // test png read write
+    // test overlay
     t_rgb_image image;
     CHECK( pngToRgb( "simple_map.png", &image));
+    overlay.width = IMAGE_WIDTH;
+    overlay.height = IMAGE_HEIGHT;
+    overlay.overlay = (unsigned char **) malloc( overlay.height * sizeof( unsigned char *));
+    for ( i=0; i<overlay.height; i++ ) {
+        overlay.overlay[i] = (unsigned char *) malloc( overlay.width * sizeof( unsigned char));
+    }
+    for ( i=0; i<overlay.height; i++ ) {
+        for ( j=0; j<overlay.width; j++ ) {
+            overlay.overlay[i][j] = ( i > 200 ) && ( i < 600 ) && ( j > 200 ) && ( j < 600 );
+        }
+    }
+    CHECK( addOverlay( image, overlay));
     CHECK( rgbToPng( image, "simple_map_2.png"));
     return 0;
 

@@ -15,6 +15,7 @@
 #define ERROR_TYPE_SIZE         10
 #define ERROR_COLOR_TYPE        11
 #define ERROR_BIT_DEPTH         12
+#define ERROR_DIMENSIONS        13
 
 int errCodeToMessage( int i_errCode, char *o_message);
 
