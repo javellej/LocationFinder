@@ -9,10 +9,10 @@
  */
 int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     int retCode;
-    unsigned char header[8];
+    /*unsigned char header[8];*/
     png_structp png_ptr;
     png_infop info_ptr;
-    int width, height, color_type, bit_depth;
+    int color_type, num_channels;
     t_rgb_image image;
     int x, y;
 
@@ -36,18 +36,19 @@ int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     info_ptr = png_create_info_struct( png_ptr);
     if ( setjmp( png_jmpbuf( png_ptr)) ) { CHECK( ERROR_IMAGE_CREATION); }
     png_init_io( png_ptr, f);
-    //png_set_sig_bytes( png_ptr, 8);
     png_read_info( png_ptr, info_ptr);
-    if ( IMAGE_WIDTH != ( width = png_get_image_width( png_ptr, info_ptr) ) ) {
-        printf( "got image of width %d\n", width);
+    if ( IMAGE_WIDTH != png_get_image_width( png_ptr, info_ptr) ) {
         CHECK( ERROR_IMAGE_WIDTH);
     }
-    if ( IMAGE_HEIGHT != ( height = png_get_image_height( png_ptr, info_ptr) ) ) {
-        printf( "got image of height %d\n", height);
+    if ( IMAGE_HEIGHT != png_get_image_height( png_ptr, info_ptr) ) {
         CHECK( ERROR_IMAGE_HEIGHT);
     }
-    if ( PNG_COLOR_TYPE_PALETTE != ( color_type = png_get_color_type( png_ptr, info_ptr) ) ) {
-        printf( "got color type %d\n", color_type);
+    color_type = png_get_color_type( png_ptr, info_ptr);
+    if ( PNG_COLOR_TYPE_PALETTE == color_type ) {
+        num_channels = 4;
+    } else if ( PNG_COLOR_TYPE_RGB == color_type ) {
+        num_channels = 3;
+    } else {
         CHECK( ERROR_COLOR_TYPE);
     }
     png_set_palette_to_rgb( png_ptr);
@@ -55,7 +56,6 @@ int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     if ( 8 != png_get_bit_depth( png_ptr, info_ptr) ) {
         CHECK( ERROR_BIT_DEPTH);
     }
-    //number_of_passes = png_set_interlace_handling(png_ptr);
     png_read_update_info( png_ptr, info_ptr);
 
 
@@ -68,10 +68,10 @@ int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
         image.pixels[y] = (t_pixel *) malloc( image.width * sizeof( t_pixel));
         png_bytep row = (png_bytep) malloc( png_get_rowbytes( png_ptr, info_ptr));
         png_read_row( png_ptr, row, NULL);
-        for ( x=0; x<image.width; x++ ) { // TODO : handle difference RGB RBA (3-4)
-            image.pixels[y][x].R = row[4*x];
-            image.pixels[y][x].G = row[4*x+1];
-            image.pixels[y][x].B = row[4*x+2];
+        for ( x=0; x<image.width; x++ ) {
+            image.pixels[y][x].R = row[num_channels*x];
+            image.pixels[y][x].G = row[num_channels*x+1];
+            image.pixels[y][x].B = row[num_channels*x+2];
         }
     }
     //png_read_image( png_ptr, rows);
@@ -154,10 +154,15 @@ int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
     // add stronger blue component to pixels when overlay pixel is present
     for ( y=0; y<io_image.height; y++ ) {
         for ( x=0; x<io_image.width; x++ ) {
-            unsigned char currBlue = io_image.pixels[y][x].B;
-            unsigned char new_blue_component = ( currBlue >= 0xa0 ) ? 0xff : currBlue + 0xa0;
+            //unsigned char new_red = io_image.pixels[y][x].R << 1;
+            //unsigned char new_green = io_image.pixels[y][x].G << 1;
+            //unsigned char new_blue = ( curr_blue + 0xff ) << 1;
+            unsigned char curr_blue = io_image.pixels[y][x].B;
+            unsigned char new_blue = ( curr_blue >= 0xa0 ) ? 0xff : curr_blue + 0xa0;
             if ( i_overlay.overlay[y][x] ) {
-               io_image.pixels[y][x].B = 0xff;//new_blue_component;
+               //io_image.pixels[y][x].R = new_red;
+               //io_image.pixels[y][x].G = new_green;
+               io_image.pixels[y][x].B = new_blue;
             }
         }
     } 
