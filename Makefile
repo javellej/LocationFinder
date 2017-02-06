@@ -1,10 +1,18 @@
-CC=gcc
-CFLAGS=-O0 -Wall -Iinc/ -g
-LIBS=-lcurl -lpng
+CC = gcc
+SRCDIR = ./src
+CFLAGS = -O0 -Wall -Iinc/ -g
+LIBS = -lcurl -lpng
+OBJ = main.o tools.o query.o error.o image.o
+EXEC = locationFinder
 
-locationFinder:
-	$(CC) src/main.c src/tools.c src/query.c src/error.c src/image.c $(CFLAGS) -o locationFinder $(LIBS)
+%.o: $(SRCDIR)/%.c
+	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(EXEC): $(OBJ)
+	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+
+.PHONY: clean
 
 clean:
-	rm -f locationFinder
+	rm -f *.o
 
