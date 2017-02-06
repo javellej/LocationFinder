@@ -48,6 +48,33 @@ int retrieveArguments( int i_argc, char **i_argv, int *o_longitude, int *o_latit
     return 0;
 }
 
+int sampleImage( t_rgb_image *io_image) {
+    t_rgb_image image;
+    int i, j;
+
+    image.width = IMAGE_WIDTH;
+    image.height = IMAGE_HEIGHT;
+    image.pixels = (t_pixel **) malloc( image.height * sizeof( t_pixel *));
+    for ( i=0; i<image.height; i++ ) {
+        image.pixels[i] = (t_pixel *) malloc( image.width * sizeof( t_pixel));
+    }
+
+    // fill image contents
+    for ( i=0; i<image.height; i++ ) {
+        for ( j=0; j<image.width; j++ ) {
+            t_pixel pixel;
+            pixel.R = 0xff;
+            pixel.G = 0;
+            pixel.B = 0;
+            image.pixels[i][j] = pixel;
+        }
+    }
+
+    *io_image = image;
+
+    return 0;
+}
+
 int main( int argc, char **argv) {
     int retCode;
 
@@ -108,6 +135,7 @@ int main( int argc, char **argv) {
 
     // test overlay
     t_rgb_image image;
+    //sampleImage( &image);
     CHECK( pngToRgb( "simple_map.png", &image));
     overlay.width = IMAGE_WIDTH;
     overlay.height = IMAGE_HEIGHT;
@@ -117,7 +145,7 @@ int main( int argc, char **argv) {
     }
     for ( i=0; i<overlay.height; i++ ) {
         for ( j=0; j<overlay.width; j++ ) {
-            overlay.overlay[i][j] = ( i > 200 ) && ( i < 600 ) && ( j > 200 ) && ( j < 600 );
+            overlay.overlay[i][j] = ( i > 200 ) && ( i < 400 ) && ( j > 200 ) && ( j < 400 );
         }
     }
     CHECK( addOverlay( image, overlay));

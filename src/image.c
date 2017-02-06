@@ -5,17 +5,16 @@
 #include <png.h>
 
 /*
- * read png file and output an RGBA image
+ * read png file and output an RGB image
  */
 int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     int retCode;
     unsigned char header[8];
     png_structp png_ptr;
     png_infop info_ptr;
-    png_bytep *rows;
     int width, height, color_type, bit_depth;
     t_rgb_image image;
-    int i;
+    int x, y;
 
     // check png_byte type is actually a char
     if ( sizeof( png_byte) != sizeof( unsigned char) ) {
@@ -35,7 +34,7 @@ int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     // initialize png structures
     png_ptr = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     info_ptr = png_create_info_struct( png_ptr);
-    setjmp( png_jmpbuf( png_ptr));
+    if ( setjmp( png_jmpbuf( png_ptr)) ) { CHECK( ERROR_IMAGE_CREATION); }
     png_init_io( png_ptr, f);
     //png_set_sig_bytes( png_ptr, 8);
     png_read_info( png_ptr, info_ptr);
@@ -60,18 +59,22 @@ int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     png_read_update_info( png_ptr, info_ptr);
 
 
-    // read png image
-    setjmp( png_jmpbuf( png_ptr));
-    rows = (png_bytep *) malloc( sizeof( png_bytep) * IMAGE_HEIGHT);
-    for ( i=0; i<IMAGE_HEIGHT; i++ ) {
-        rows[i] = (png_byte *) malloc( png_get_rowbytes( png_ptr, info_ptr));
-    }
-    png_read_image( png_ptr, rows);
-
-    // translate png image to rgba image struct
+    // read png image to rgb image struct
+    if ( setjmp( png_jmpbuf( png_ptr)) ) { CHECK( ERROR_IMAGE_CREATION); }
     image.width = IMAGE_WIDTH;
     image.height = IMAGE_HEIGHT;
-    image.pixels = (t_pixel **) rows;
+    image.pixels = (t_pixel **) malloc( image.height * sizeof( t_pixel *));
+    for ( y=0; y<image.height; y++ ) {
+        image.pixels[y] = (t_pixel *) malloc( image.width * sizeof( t_pixel));
+        png_bytep row = (png_bytep) malloc( png_get_rowbytes( png_ptr, info_ptr));
+        png_read_row( png_ptr, row, NULL);
+        for ( x=0; x<image.width; x++ ) { // TODO : handle difference RGB RBA (3-4)
+            image.pixels[y][x].R = row[4*x];
+            image.pixels[y][x].G = row[4*x+1];
+            image.pixels[y][x].B = row[4*x+2];
+        }
+    }
+    //png_read_image( png_ptr, rows);
 
     *o_image = image;
 
@@ -84,7 +87,7 @@ ERROR:
 }
 
 /*
- * write RGBA image to png file
+ * write RGB image to png file
  */
 int rgbToPng( t_rgb_image i_image, char *png_file_name) {
     int retCode;
@@ -98,22 +101,29 @@ int rgbToPng( t_rgb_image i_image, char *png_file_name) {
 
     // initialize png structures
     png_ptr = png_create_write_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    info_ptr = png_create_info_struct(png_ptr);
-    setjmp( png_jmpbuf( png_ptr));
+    if ( NULL == png_ptr ) { CHECK( ERROR_IMAGE_CREATION); }
+    info_ptr = png_create_info_struct( png_ptr);
+    if ( NULL == info_ptr ) { CHECK( ERROR_IMAGE_CREATION); }
+    if ( setjmp( png_jmpbuf( png_ptr)) ) { CHECK( ERROR_IMAGE_CREATION); }
     png_init_io( png_ptr, f);
 
     // write header
-    setjmp( png_jmpbuf( png_ptr));
     png_set_IHDR( png_ptr, info_ptr, i_image.width, i_image.height,
-                  8, PNG_COLOR_TYPE_RGBA, PNG_INTERLACE_NONE,
+                  8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
                   PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
     png_write_info( png_ptr, info_ptr);
 
-
     // write bytes
-    setjmp( png_jmpbuf( png_ptr));
-    png_write_image( png_ptr, (png_byte **) i_image.pixels);
-    setjmp( png_jmpbuf( png_ptr));
+    png_bytep row = (png_bytep) malloc( 3 * i_image.width * sizeof(png_byte));
+    int x, y;
+    for ( y=0; y<i_image.height; y++ ) {
+        for ( x=0; x<i_image.width; x++ ) {
+            row[3*x] = i_image.pixels[y][x].R;
+            row[3*x+1] = i_image.pixels[y][x].G;
+            row[3*x+2] = i_image.pixels[y][x].B;
+        }
+        png_write_row( png_ptr, row);
+    }
     png_write_end( png_ptr, NULL);
 
     fclose( f);
@@ -130,9 +140,10 @@ ERROR:
  * add an overlay to an existing image
  * the overlay acts like a semi-transparent mask
  */
+// TODO : review overlay visual display
 int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
     int retCode;
-    int i, j;
+    int x, y;
 
     // check dimensions
     if ( ( io_image.width != i_overlay.width ) ||
@@ -141,11 +152,12 @@ int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
     }
 
     // add stronger blue component to pixels when overlay pixel is present
-    for ( i=0; i<io_image.height; i++ ) {
-        for ( j=0; j<io_image.width; j++ ) {
-            unsigned char new_blue_component = ( 0xff + io_image.pixels[i][j].B ) << 1;
-            if ( i_overlay.overlay[i][j] ) {
-               io_image.pixels[i][j].B = new_blue_component;
+    for ( y=0; y<io_image.height; y++ ) {
+        for ( x=0; x<io_image.width; x++ ) {
+            unsigned char currBlue = io_image.pixels[y][x].B;
+            unsigned char new_blue_component = ( currBlue >= 0xa0 ) ? 0xff : currBlue + 0xa0;
+            if ( i_overlay.overlay[y][x] ) {
+               io_image.pixels[y][x].B = 0xff;//new_blue_component;
             }
         }
     } 

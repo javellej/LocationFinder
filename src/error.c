@@ -44,6 +44,9 @@ int errCodeToMessage( int i_errCode, char *o_message)
         case ERROR_DIMENSIONS:
             sprintf( o_message, "wrong dimensions");
             break;
+        case ERROR_IMAGE_CREATION:
+            sprintf( o_message, "error while creating PNG image");
+            break;
     }
     return 0;
 }
