@@ -27,7 +27,7 @@ int pointQuery( t_point i_center, char *o_query) {
 
     coordToStr( i_center.m_latitude, latitude_str);
     coordToStr( i_center.m_longitude, longitude_str);
-    sprintf( o_query, "http://www.google.com/maps/api/staticmap?center=%s,%s&size=%dx%d&zoom=10", latitude_str, longitude_str, IMAGE_WIDTH, IMAGE_HEIGHT);
+    sprintf( o_query, "http://www.google.com/maps/api/staticmap?center=%s,%s&size=%dx%d&zoom=14", latitude_str, longitude_str, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     return 0;
 }
