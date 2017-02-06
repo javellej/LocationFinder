@@ -1,8 +1,9 @@
-#include <string.h>
-#include <curl/curl.h>
 #include "tools.h"
 #include "query.h"
 #include "error.h"
+#include "definitions.h"
+#include <curl/curl.h>
+#include <string.h>
 
 /* callback used by curl to write data from a webpage into a structure */
 size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_dstBuffer) {
@@ -112,6 +113,8 @@ int getMap( CURL *i_curl, t_point i_center) {
     CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, f));
     CHECK( curl_easy_perform( i_curl));
 
+    fclose( f);
+
     return 0;
 
 ERROR:
@@ -142,6 +145,8 @@ int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVer
     /* free memory */
     free( queryUrl);
     queryUrl = NULL;
+
+    fclose( f);
 
     return 0;
 

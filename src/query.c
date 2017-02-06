@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include "query.h"
 #include "tools.h"
+#include "query.h"
+#include "definitions.h"
 #include <string.h>
+#include <stdio.h>
 
 int coordToStr( int i_coord, char *io_string)
 {
@@ -26,7 +27,7 @@ int pointQuery( t_point i_center, char *o_query) {
 
     coordToStr( i_center.m_latitude, latitude_str);
     coordToStr( i_center.m_longitude, longitude_str);
-    sprintf( o_query, "http://www.google.com/maps/api/staticmap?center=%s,%s&size=600x600&zoom=10", latitude_str, longitude_str);
+    sprintf( o_query, "http://www.google.com/maps/api/staticmap?center=%s,%s&size=%dx%d&zoom=10", latitude_str, longitude_str, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     return 0;
 }
@@ -66,7 +67,7 @@ int polygonQuery( t_point i_center, t_point *i_polygon, int i_numPoints, char *o
     coordToStr( i_center.m_longitude, pointLongitude);
 
     /* write beginning of query */
-    sprintf( o_query, "http://maps.googleapis.com/maps/api/staticmap?center=%s,%s&zoom=10&size=600x600&maptype=plan&markers=color:red%%7C%s,%s&path=color%%3ablack|weight:3|fillcolor%%3agreen", pointLatitude, pointLongitude, pointLatitude, pointLongitude);
+    sprintf( o_query, "http://maps.googleapis.com/maps/api/staticmap?center=%s,%s&zoom=10&size=%dx%d&maptype=plan&markers=color:red%%7C%s,%s&path=color%%3ablack|weight:3|fillcolor%%3agreen", pointLatitude, pointLongitude, IMAGE_WIDTH, IMAGE_HEIGHT, pointLatitude, pointLongitude);
     tmp += strlen( o_query);
 
     /* write points */

@@ -3,9 +3,11 @@
 #include <curl/curl.h>
 #include <time.h>
 
+#include "image.h"
 #include "structs.h"
 #include "tools.h"
 #include "error.h"
+#include "definitions.h"
 
 int printUsage( )
 {
@@ -46,6 +48,33 @@ int retrieveArguments( int i_argc, char **i_argv, int *o_longitude, int *o_latit
     return 0;
 }
 
+int sampleImage( t_rgb_image *io_image) {
+    t_rgb_image image;
+    int i, j;
+
+    image.width = IMAGE_WIDTH;
+    image.height = IMAGE_HEIGHT;
+    image.pixels = (t_pixel **) malloc( image.height * sizeof( t_pixel *));
+    for ( i=0; i<image.height; i++ ) {
+        image.pixels[i] = (t_pixel *) malloc( image.width * sizeof( t_pixel));
+    }
+
+    // fill image contents
+    for ( i=0; i<image.height; i++ ) {
+        for ( j=0; j<image.width; j++ ) {
+            t_pixel pixel;
+            pixel.R = 0xff;
+            pixel.G = 0;
+            pixel.B = 0;
+            image.pixels[i][j] = pixel;
+        }
+    }
+
+    *io_image = image;
+
+    return 0;
+}
+
 int main( int argc, char **argv) {
     int retCode;
 
@@ -60,7 +89,9 @@ int main( int argc, char **argv) {
     t_point *convexHullCandidates = NULL;
     int numVertices = 0;
     int numCandidates = 0;
-    int i;
+    int i, j;
+    char errorMessage[512] = {0};
+    t_overlay overlay;
 
     // get command arguments
     CHECK( retrieveArguments( argc-1, argv+1, &(start.m_longitude), &(start.m_latitude)));
@@ -99,11 +130,30 @@ int main( int argc, char **argv) {
     //CHECK( getAreaMap( curl, start, convexHullCandidates, numVertices));
     */
 
-    /* cleanup curl */ 
+    // cleanup curl
     curl_easy_cleanup( curl);
+
+    // test overlay
+    t_rgb_image image;
+    //sampleImage( &image);
+    CHECK( pngToRgb( "simple_map.png", &image));
+    overlay.width = IMAGE_WIDTH;
+    overlay.height = IMAGE_HEIGHT;
+    overlay.overlay = (unsigned char **) malloc( overlay.height * sizeof( unsigned char *));
+    for ( i=0; i<overlay.height; i++ ) {
+        overlay.overlay[i] = (unsigned char *) malloc( overlay.width * sizeof( unsigned char));
+    }
+    for ( i=0; i<overlay.height; i++ ) {
+        for ( j=0; j<overlay.width; j++ ) {
+            overlay.overlay[i][j] = ( i > 200 ) && ( i < 400 ) && ( j > 200 ) && ( j < 400 );
+        }
+    }
+    CHECK( addOverlay( image, overlay));
+    CHECK( rgbToPng( image, "simple_map_2.png"));
     return 0;
 
 ERROR:
-    printf( "Error detected -> code %d\n", retCode);
+    errCodeToMessage( retCode, errorMessage);
+    printf( "Error detected -> code %d : %s\n", retCode, errorMessage);
     return retCode;
 }
