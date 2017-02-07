@@ -86,11 +86,7 @@ int main( int argc, char **argv) {
     int maxDistance = 50000;
     int maxTime = 45*60;
     int maxRadius = maxDistance*(0xffffffff/(float)EARTH_CIRCUMFERENCE);
-    t_point candidates[NUMPOINTS] = {{0}};
-    t_point *convexHullCandidates = NULL;
-    int numVertices = 0;
-    int numCandidates = 0;
-    int i, j;
+    int i;
     char errorMessage[512] = {0};
     t_overlay overlay;
 
@@ -104,6 +100,8 @@ int main( int argc, char **argv) {
 
     // get map centered on input point
     CHECK( getMap( curl, start));
+
+    // get list of distances 
 
     // cleanup curl
     curl_easy_cleanup( curl);
@@ -119,10 +117,13 @@ int main( int argc, char **argv) {
         memset( overlay.overlay[i], 0, overlay.width * sizeof( unsigned char));
     }
     addSquare( overlay, 12, 4, 67);
-    addSquare( overlay, 333, 172, 18);
+    addCircle( overlay, 333, 172, 18);
     addSquare( overlay, 402, 444, 111);
     CHECK( addOverlay( image, overlay));
     CHECK( rgbToPng( image, "simple_map_2.png"));
+
+    // TODO : free memory -> init + term functions
+
     return 0;
 
 ERROR:
