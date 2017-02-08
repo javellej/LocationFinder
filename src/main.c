@@ -17,24 +17,19 @@ int printUsage( )
     return 0;
 }
 
-int retrieveArguments( int i_argc, char **i_argv, int *o_longitude, int *o_latitude)
+int retrieveArguments( int i_argc, char **i_argv, float *o_lng, float *o_lat)
 {
-    int longitude=0, latitude=0;
-
-#if 0
-    printf( "argc : %d\n", i_argc);
-    printf( "*argv : %s\n", *i_argv);
-#endif
+    float lng=0, lat=0;
 
     while ( i_argc )
     {
         if ( (i_argc >= 2) && !strcmp( *i_argv, "-lon") )
         {
-            longitude = atoi( *(i_argv+1));
+            lng = atof( *(i_argv+1));
             i_argc-=2;
             i_argv+=2;
         } else if ( (i_argc >= 2) && !strcmp( *i_argv, "-lat") ) {
-            latitude = atoi( *(i_argv+1));
+            lat = atof( *(i_argv+1));
             i_argc-=2;
             i_argv+=2;
         } else {
@@ -43,8 +38,8 @@ int retrieveArguments( int i_argc, char **i_argv, int *o_longitude, int *o_latit
         }
     }
 
-    *o_longitude = longitude;
-    *o_latitude = latitude;
+    *o_lng = lng;
+    *o_lat = lat;
 
     return 0;
 }
@@ -86,13 +81,13 @@ int main( int argc, char **argv) {
     int maxDistance = 50000;
     int maxTime = 45*60;
     int maxRadius = maxDistance*(0xffffffff/(float)EARTH_CIRCUMFERENCE);
-    int i;
+    int i, j;
     char errorMessage[512] = {0};
     t_overlay overlay;
 
     // get command arguments
-    CHECK( retrieveArguments( argc-1, argv+1, &(start.m_longitude), &(start.m_latitude)));
-    printf( "lon %d, lat %d\n", start.m_longitude, start.m_latitude);
+    CHECK( retrieveArguments( argc-1, argv+1, &(start.lng), &(start.lat)));
+    printf( "lon %f, lat %f\n", start.lng, start.lat);
 
     // initialize curl
     curl = curl_easy_init();
@@ -102,6 +97,15 @@ int main( int argc, char **argv) {
     CHECK( getMap( curl, start));
 
     // get list of distances 
+    t_point candidates[25];
+    for ( i=0; i<5; i++ ) {
+        for ( j=0; j<5; j++ ) {
+            candidates[5*i+j].lat = start.lat + 405*30*i;
+            candidates[5*i+j].lng = start.lng + 858*30*j;
+            int dist, time;
+            getDistance( curl, start, candidates[5*i+j], &dist, &time);
+        }
+    }
 
     // cleanup curl
     curl_easy_cleanup( curl);
@@ -116,11 +120,20 @@ int main( int argc, char **argv) {
         overlay.overlay[i] = (unsigned char *) malloc( overlay.width * sizeof( unsigned char));
         memset( overlay.overlay[i], 0, overlay.width * sizeof( unsigned char));
     }
-    addSquare( overlay, 12, 4, 67);
+    for ( i=0; i<25; i++ ) {
+        printf( "%f\n", candidates[i].lat);
+        int x_coord = ( candidates[i].lat - start.lat) * 85 / (float) ( 1 << 21 );
+        x_coord += 300;
+        int y_coord = ( candidates[i].lng - start.lng) * 180 / (float) ( 1 << 21 );
+        y_coord += 300;
+        printf( "x %d, y %d\n", x_coord, y_coord);
+        addCircle( overlay, x_coord, y_coord, 10);
+    }
+    /*addSquare( overlay, 12, 4, 67);
     addCircle( overlay, 333, 172, 18);
-    addSquare( overlay, 402, 444, 111);
+    addSquare( overlay, 402, 444, 111);*/
     CHECK( addOverlay( image, overlay));
-    CHECK( rgbToPng( image, "simple_map_2.png"));
+    CHECK( rgbToPng( image, "map_overlay.png"));
 
     // TODO : free memory -> init + term functions
 

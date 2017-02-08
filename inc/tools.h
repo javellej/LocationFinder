@@ -34,5 +34,7 @@ int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVer
 int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value);
 int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint);
 int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int *o_numVertices);
+int conv_image_to_map( t_point i_center, int i_x, int i_y, int zoom, float *o_lng, float *o_lat);
+int conv_map_to_image( t_point i_center, float i_lng, float i_lat, int zoom, int *o_x, int *o_y);
 
 #endif

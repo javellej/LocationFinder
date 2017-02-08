@@ -1,7 +1,7 @@
 CC = gcc
 SRCDIR = ./src
 CFLAGS = -O0 -Wall -Iinc/ -g
-LIBS = -lcurl -lpng
+LIBS = -lm -lcurl -lpng
 OBJ = main.o tools.o query.o error.o image.o overlay.o
 EXEC = locationFinder
 

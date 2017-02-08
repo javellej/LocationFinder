@@ -13,8 +13,8 @@ int random( i_maxDist, i_maxTime, t_point **o_candidates)
     {
         int r_lat = ( rand() % (2*maxRadius) ) - maxRadius;
         int r_lon = ( rand() % (2*maxRadius) ) - maxRadius;
-        end.m_latitude = start.m_latitude + r_lat;
-        end.m_longitude = start.m_longitude + r_lon;
+        end.lat = start.lat + r_lat;
+        end.lng = start.lng + r_lon;
         CHECK( getDistance( curl, start, end, &distance_m, &time_s));
 #if 0
         printf( "step %d : distance %d m, time %d s\n", i, distance_m, time_s);

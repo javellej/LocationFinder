@@ -2,6 +2,7 @@
 #include "query.h"
 #include "error.h"
 #include "definitions.h"
+#include <math.h>
 #include <curl/curl.h>
 #include <string.h>
 
@@ -157,8 +158,8 @@ ERROR:
 /* evaluation function for sort : monotonic according to angles */
 int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value) {
     float value;
-    float adj = (float) i_pointToEval.m_longitude - i_refPoint.m_longitude;
-    float opp = (float) i_pointToEval.m_latitude - i_refPoint.m_latitude;
+    float adj = (float) i_pointToEval.lng - i_refPoint.lng;
+    float opp = (float) i_pointToEval.lat - i_refPoint.lat;
     float hyp2 = adj*adj + opp*opp;
 
     if ( !hyp2 ) /* same point */ {
@@ -228,7 +229,7 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
 
     /* step 1 : find element that is on convex hull -> lower latitude */
     for ( i=0; i<i_numPoints; i++ ) {
-        if ( i_points[i].m_latitude < i_points[lowLatIndex].m_latitude ) {
+        if ( i_points[i].lat < i_points[lowLatIndex].lat ) {
             lowLatIndex = i;
         }
     }
@@ -244,12 +245,12 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     hullPoints[i_numPoints-1] = 1;
     prev = 0;
     for ( i=1; i<i_numPoints-1; i++ ) {
-        long long xA = (long long) i_points[prev].m_longitude;
-        long long yA = (long long) i_points[prev].m_latitude;
-        long long xB = (long long) i_points[i+1].m_longitude;
-        long long yB = (long long) i_points[i+1].m_latitude;
-        long long xCurr = (long long) i_points[i].m_longitude;
-        long long yCurr = (long long) i_points[i].m_latitude;
+        long long xA = (long long) i_points[prev].lng;
+        long long yA = (long long) i_points[prev].lat;
+        long long xB = (long long) i_points[i+1].lng;
+        long long yB = (long long) i_points[i+1].lat;
+        long long xCurr = (long long) i_points[i].lng;
+        long long yCurr = (long long) i_points[i].lat;
         long long eval = (xA-xCurr)*(yB-yCurr) - (xB-xCurr)*(yA-yCurr);
         printf( "eval : %lld\n", eval);
         if ( eval < 0 ) {/* add point to convex hull */
@@ -278,4 +279,38 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
 
 ERROR:
     return retCode;
+}
+
+/*
+ * convert image pixel coordinates to maps coordinates
+ */
+int conv_image_to_map( t_point i_center, int i_x, int i_y, int zoom, float *o_lng, float *o_lat) {
+    float lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
+    float lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
+    float A = 1 / lambda_lng;
+    float B = IMAGE_WIDTH / 2 - A * i_center.lng;
+    float C = 1 / lambda_lat;
+    float D = - IMAGE_HEIGHT / 2 + C * i_center.lat;
+
+    *o_lng = A * i_x + B;
+    *o_lat = C * i_y + D;
+    return 0;
+}
+
+/*
+ * convert maps coordinates to image pixel coordinates
+ */
+// TODO compute coefficients only once (initialize context)
+int conv_map_to_image( t_point i_center, float i_lng, float i_lat, int zoom, int *o_x, int *o_y) {
+    float lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
+    float lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
+    float A = lambda_lng;
+    float B = i_center.lng - A * IMAGE_WIDTH / 2;
+    float C = -lambda_lat;
+    float D = i_center.lat - C * IMAGE_HEIGHT / 2;
+
+    *o_x = A * i_lng + B;
+    *o_y = C * i_lat + D;
+
+    return 0;
 }
