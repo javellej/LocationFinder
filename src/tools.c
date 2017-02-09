@@ -2,7 +2,6 @@
 #include "query.h"
 #include "error.h"
 #include "definitions.h"
-#include <math.h>
 #include <curl/curl.h>
 #include <string.h>
 
@@ -67,8 +66,7 @@ int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, 
     if ( ptr == NULL ) { ptr = strstr( pageContent.m_data, " miles\""); }
     if ( ptr == NULL ) { CHECK( ERROR_WRONG_FORMAT); }
     /*  place pointer at the beginning of the interesting data */
-    while ( *(--ptr) != '[' )
-    {
+    while ( *(--ptr) != '[' ) {
         if ( ptr < pageContent.m_data ) { CHECK( ERROR_WRONG_FORMAT); }
     }
 #if 0
@@ -89,7 +87,6 @@ int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, 
     return 0;
 
 ERROR:
-    printf( "Error detected -> code %d\n", retCode);
     return retCode;
 }
 
@@ -279,38 +276,4 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
 
 ERROR:
     return retCode;
-}
-
-/*
- * convert image pixel coordinates to maps coordinates
- */
-int conv_image_to_map( t_point i_center, int i_x, int i_y, int zoom, float *o_lng, float *o_lat) {
-    float lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    float lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    float A = 1 / lambda_lng;
-    float B = IMAGE_WIDTH / 2 - A * i_center.lng;
-    float C = 1 / lambda_lat;
-    float D = - IMAGE_HEIGHT / 2 + C * i_center.lat;
-
-    *o_lng = A * i_x + B;
-    *o_lat = C * i_y + D;
-    return 0;
-}
-
-/*
- * convert maps coordinates to image pixel coordinates
- */
-// TODO compute coefficients only once (initialize context)
-int conv_map_to_image( t_point i_center, float i_lng, float i_lat, int zoom, int *o_x, int *o_y) {
-    float lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    float lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    float A = lambda_lng;
-    float B = i_center.lng - A * IMAGE_WIDTH / 2;
-    float C = -lambda_lat;
-    float D = i_center.lat - C * IMAGE_HEIGHT / 2;
-
-    *o_x = A * i_lng + B;
-    *o_y = C * i_lat + D;
-
-    return 0;
 }

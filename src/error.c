@@ -47,6 +47,9 @@ int errCodeToMessage( int i_errCode, char *o_message)
         case ERROR_IMAGE_CREATION:
             sprintf( o_message, "error while creating PNG image");
             break;
+        case ERROR_OUT_OF_RANGE:
+            sprintf( o_message, "value out of range");
+            break;
     }
     return 0;
 }

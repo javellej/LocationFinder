@@ -1,8 +1,8 @@
 CC = gcc
 SRCDIR = ./src
-CFLAGS = -O0 -Wall -Iinc/ -g
+CFLAGS = -O0 -Wall -Werror -Iinc/ -g
 LIBS = -lm -lcurl -lpng
-OBJ = main.o tools.o query.o error.o image.o overlay.o
+OBJ = main.o tools.o query.o error.o image.o overlay.o coordinates.o
 EXEC = locationFinder
 
 %.o: $(SRCDIR)/%.c
