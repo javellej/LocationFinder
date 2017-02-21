@@ -4,19 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 
-/*int coordToStr( int i_coord, char *io_string)
-{
-    if ( i_coord < 0 )
-    {
-        *(io_string++) = '-';
-        i_coord = -i_coord;
-    }
-
-    sprintf( io_string, "%03d.%.7d", i_coord/10000000, i_coord%10000000);
-
-    return 0;
-}*/
-
 /*
  * output query URL for single point
  * PRE : the query string "o_query" is already allocated

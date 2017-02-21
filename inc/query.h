@@ -3,7 +3,6 @@
 
 #include "structs.h"
 
-//int coordToStr( int i_coord, char *o_string);
 int pointQuery( t_point i_center, char *o_query);
 int directionQuery( t_point i_start, t_point i_end, char *o_query);
 int polygonQuery( t_point i_center, t_point *i_polygon, int i_numPoints, char *o_query);
