@@ -66,8 +66,7 @@ int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, 
     if ( ptr == NULL ) { ptr = strstr( pageContent.m_data, " miles\""); }
     if ( ptr == NULL ) { CHECK( ERROR_WRONG_FORMAT); }
     /*  place pointer at the beginning of the interesting data */
-    while ( *(--ptr) != '[' )
-    {
+    while ( *(--ptr) != '[' ) {
         if ( ptr < pageContent.m_data ) { CHECK( ERROR_WRONG_FORMAT); }
     }
 #if 0
@@ -88,7 +87,6 @@ int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, 
     return 0;
 
 ERROR:
-    printf( "Error detected -> code %d\n", retCode);
     return retCode;
 }
 
@@ -157,8 +155,8 @@ ERROR:
 /* evaluation function for sort : monotonic according to angles */
 int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value) {
     float value;
-    float adj = (float) i_pointToEval.m_longitude - i_refPoint.m_longitude;
-    float opp = (float) i_pointToEval.m_latitude - i_refPoint.m_latitude;
+    float adj = (float) i_pointToEval.lng - i_refPoint.lng;
+    float opp = (float) i_pointToEval.lat - i_refPoint.lat;
     float hyp2 = adj*adj + opp*opp;
 
     if ( !hyp2 ) /* same point */ {
@@ -228,7 +226,7 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
 
     /* step 1 : find element that is on convex hull -> lower latitude */
     for ( i=0; i<i_numPoints; i++ ) {
-        if ( i_points[i].m_latitude < i_points[lowLatIndex].m_latitude ) {
+        if ( i_points[i].lat < i_points[lowLatIndex].lat ) {
             lowLatIndex = i;
         }
     }
@@ -244,12 +242,12 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     hullPoints[i_numPoints-1] = 1;
     prev = 0;
     for ( i=1; i<i_numPoints-1; i++ ) {
-        long long xA = (long long) i_points[prev].m_longitude;
-        long long yA = (long long) i_points[prev].m_latitude;
-        long long xB = (long long) i_points[i+1].m_longitude;
-        long long yB = (long long) i_points[i+1].m_latitude;
-        long long xCurr = (long long) i_points[i].m_longitude;
-        long long yCurr = (long long) i_points[i].m_latitude;
+        long long xA = (long long) i_points[prev].lng;
+        long long yA = (long long) i_points[prev].lat;
+        long long xB = (long long) i_points[i+1].lng;
+        long long yB = (long long) i_points[i+1].lat;
+        long long xCurr = (long long) i_points[i].lng;
+        long long yCurr = (long long) i_points[i].lat;
         long long eval = (xA-xCurr)*(yB-yCurr) - (xB-xCurr)*(yA-yCurr);
         printf( "eval : %lld\n", eval);
         if ( eval < 0 ) {/* add point to convex hull */

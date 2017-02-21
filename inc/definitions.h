@@ -8,4 +8,8 @@
 #define EARTH_CIRCUMFERENCE     40075160
 #define NUMPOINTS               10
 
+#define PI              3.14159265358979
+#define MAX_LONGITUDE   180
+#define MAX_LATITUDE    85.05115 // preimage of PI of the latitude in mercator projection
+
 #endif /* _DEFINITIONS_H_ */

@@ -17,6 +17,8 @@
 #define ERROR_BIT_DEPTH         12
 #define ERROR_DIMENSIONS        13
 #define ERROR_IMAGE_CREATION    14
+#define ERROR_OUT_OF_RANGE      15
+#define ERROR_MEMORY_ALLOCATION 16
 
 int errCodeToMessage( int i_errCode, char *o_message);
 

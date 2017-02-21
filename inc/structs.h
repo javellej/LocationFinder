@@ -4,8 +4,8 @@
 #include <stdlib.h>
 
 typedef struct {
-    int m_longitude;
-    int m_latitude;
+    float lng;
+    float lat;
 }t_point;
 
 typedef struct {

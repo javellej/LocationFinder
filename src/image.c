@@ -9,7 +9,7 @@
  */
 int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     int retCode;
-    /*unsigned char header[8];*/
+    //unsigned char header[8];
     png_structp png_ptr;
     png_infop info_ptr;
     int color_type, num_channels;
@@ -129,43 +129,6 @@ int rgbToPng( t_rgb_image i_image, char *png_file_name) {
     fclose( f);
 
     // TODO : free image data
-
-    return 0;
-
-ERROR:
-    return retCode;
-}
-
-/*
- * add an overlay to an existing image
- * the overlay acts like a semi-transparent mask
- */
-// TODO : review overlay visual display
-int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
-    int retCode;
-    int x, y;
-
-    // check dimensions
-    if ( ( io_image.width != i_overlay.width ) ||
-         ( io_image.height != i_overlay.height ) ) {
-        CHECK( ERROR_DIMENSIONS);
-    }
-
-    // add stronger blue component to pixels when overlay pixel is present
-    for ( y=0; y<io_image.height; y++ ) {
-        for ( x=0; x<io_image.width; x++ ) {
-            //unsigned char new_red = io_image.pixels[y][x].R << 1;
-            //unsigned char new_green = io_image.pixels[y][x].G << 1;
-            //unsigned char new_blue = ( curr_blue + 0xff ) << 1;
-            unsigned char curr_blue = io_image.pixels[y][x].B;
-            unsigned char new_blue = ( curr_blue >= 0xa0 ) ? 0xff : curr_blue + 0xa0;
-            if ( i_overlay.overlay[y][x] ) {
-               //io_image.pixels[y][x].R = new_red;
-               //io_image.pixels[y][x].G = new_green;
-               io_image.pixels[y][x].B = new_blue;
-            }
-        }
-    } 
 
     return 0;
 
