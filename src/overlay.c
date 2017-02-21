@@ -1,6 +1,51 @@
 #include "overlay.h"
 #include "image.h"
 #include "error.h"
+#include "definitions.h"
+#include <string.h>
+
+/*
+ * initialize overlay structure
+ * must be released afterwards
+ */
+int overlay_init( t_overlay *io_overlay) {
+    int retCode;
+    t_overlay overlay;
+    int i;
+
+    overlay.width = IMAGE_WIDTH;
+    overlay.height = IMAGE_HEIGHT;
+    overlay.overlay = (unsigned char **) malloc( overlay.height * sizeof( unsigned char *));
+    if ( NULL == overlay.overlay ) { CHECK( ERROR_MEMORY_ALLOCATION); }
+    for ( i=0; i<overlay.height; i++ ) {
+        overlay.overlay[i] = (unsigned char *) malloc( overlay.width * sizeof( unsigned char));
+        if ( NULL == overlay.overlay[i] ) { CHECK( ERROR_MEMORY_ALLOCATION); }
+        memset( overlay.overlay[i], 0, overlay.width * sizeof( unsigned char));
+    }
+
+    *io_overlay = overlay;
+
+    return 0;
+
+ERROR:
+    return retCode;
+}
+
+/*
+ * release overlay structure and free memory
+ */
+int overlay_release( t_overlay *io_overlay) {
+    int i;
+
+    for ( i=0 ; i<io_overlay->height; i++ ) {
+        free( io_overlay->overlay[i]);
+        io_overlay->overlay[i] = NULL;
+    }
+    free( io_overlay->overlay);
+    io_overlay->overlay = NULL;
+
+    return 0;
+}
 
 /*
  * add an overlay to an existing image

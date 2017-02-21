@@ -60,39 +60,3 @@ int conv_spherical_to_image( t_point i_center, int i_zoom, float i_lng, float i_
 ERROR:
     return retCode;
 }
-
-/*
- * convert image pixel coordinates to maps coordinates
- */
-int conv_image_to_map( t_point i_center, int i_x, int i_y, int zoom, float *o_lng, float *o_lat) {
-    double lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    double lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    printf( "lambda lng = %lf lambda lat = %lf\n", lambda_lng, lambda_lat);
-    double A = lambda_lng;
-    double B = i_center.lng - A * IMAGE_WIDTH / 2;
-    double C = - lambda_lat;
-    double D = i_center.lat - C * IMAGE_HEIGHT / 2;
-
-    *o_lng = A * i_x + B;
-    *o_lat = C * i_y + D;
-    return 0;
-}
-
-/*
- * convert maps coordinates to image pixel coordinates
- */
-// TODO compute coefficients only once (initialize context)
-int conv_map_to_image( t_point i_center, float i_lng, float i_lat, int zoom, int *o_x, int *o_y) {
-    double lambda_lng = 180 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    double lambda_lat = 85 * pow( 2, -7-zoom); // TODO : optimize power of 2
-    printf( "lambda lng = %lf lambda lat = %lf\n", lambda_lng, lambda_lat);
-    double A = 1 / lambda_lng;
-    double B = - A * i_center.lng + IMAGE_WIDTH / 2;
-    double C = - 1 / lambda_lat;
-    double D = - C * i_center.lat + IMAGE_HEIGHT / 2;
-
-    *o_x = A * i_lng + B;
-    *o_y = C * i_lat + D;
-
-    return 0;
-}

@@ -50,6 +50,9 @@ int errCodeToMessage( int i_errCode, char *o_message)
         case ERROR_OUT_OF_RANGE:
             sprintf( o_message, "value out of range");
             break;
+        case ERROR_MEMORY_ALLOCATION:
+            sprintf( o_message, "memory allocation failed");
+            break;
     }
     return 0;
 }

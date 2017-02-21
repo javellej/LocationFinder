@@ -76,22 +76,17 @@ int main( int argc, char **argv) {
     int retCode;
 
     CURL *curl;
-    t_point start;//, end;
-    //int maxDistance = 50000;
-    //int maxTime = 45*60;
-    //int maxRadius = maxDistance*(0xffffffff/(float)EARTH_CIRCUMFERENCE);
-    int i;
+    t_point center;
+    int i, j, x, y;
     char errorMessage[512] = {0};
     t_overlay overlay;
 
     // get command arguments
-    CHECK( retrieveArguments( argc-1, argv+1, &(start.lng), &(start.lat)));
-    printf( "lon %f, lat %f\n", start.lng, start.lat);
+    CHECK( retrieveArguments( argc-1, argv+1, &(center.lng), &(center.lat)));
+    printf( "lon %f, lat %f\n", center.lng, center.lat);
 
-    // test mercator conversion
-    int x, y;
-    //CHECK( conv_spherical_to_mercator( 180, 85.05115, 14, &x, &y));
-    CHECK( conv_spherical_to_image( start, 14, start.lng + 0.01, start.lat + 0.01, &x, &y));
+    // convert coordinates of center to image coordinates
+    CHECK( conv_spherical_to_image( center, 14, center.lng + 0.01, center.lat + 0.01, &x, &y));
     printf( "x = %d, y=%d\n", x, y);
 
     // initialize curl
@@ -99,29 +94,36 @@ int main( int argc, char **argv) {
     if ( curl == NULL ) { CHECK( ERROR_CURL_INITIALIZE); }
 
     // get map centered on input point
-    CHECK( getMap( curl, start));
+    CHECK( getMap( curl, center));
+
+    // initialize overlay TODO create function
+    overlay_init( &overlay);
+
+    // create grid queries
+    t_point candidates[25];
+    for ( i=0; i<5; i++ ) {
+        for ( j=0; j<5; j++ ) {
+            candidates[5*i+j].lng = center.lng + 0.005*i;
+            candidates[5*i+j].lat = center.lat + 0.005*j;
+            CHECK( conv_spherical_to_image( center, 14, candidates[5*i+j].lng, candidates[5*i+j].lat, &x, &y));
+            printf( "got coordinates x %d, y %d\n", x, y);
+            addCircle( overlay, x, y, 10);
+        }
+    }
+
+    // create image and add overlay to it
+    t_rgb_image image;
+    CHECK( pngToRgb( "simple_map.png", &image));
+    CHECK( addOverlay( image, overlay));
+
+    // export to png
+    CHECK( rgbToPng( image, "map_overlay.png"));
 
     // cleanup curl
     curl_easy_cleanup( curl);
 
-    // test overlay
-    t_rgb_image image;
-    CHECK( pngToRgb( "simple_map.png", &image));
-    overlay.width = IMAGE_WIDTH;
-    overlay.height = IMAGE_HEIGHT;
-    overlay.overlay = (unsigned char **) malloc( overlay.height * sizeof( unsigned char *));
-    for ( i=0; i<overlay.height; i++ ) {
-        overlay.overlay[i] = (unsigned char *) malloc( overlay.width * sizeof( unsigned char));
-        memset( overlay.overlay[i], 0, overlay.width * sizeof( unsigned char));
-    }
-    /*addSquare( overlay, 12, 4, 67);
-    addCircle( overlay, 333, 172, 18);
-    addSquare( overlay, 402, 444, 111);*/
-    addCircle( overlay, x, y, 10);
-    CHECK( addOverlay( image, overlay));
-    CHECK( rgbToPng( image, "map_overlay.png"));
-
     // TODO : free memory -> init + term functions
+    overlay_release( &overlay);
 
     return 0;
 

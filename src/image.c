@@ -9,7 +9,7 @@
  */
 int pngToRgb( char *i_png_file_name, t_rgb_image *o_image) {
     int retCode;
-    /*unsigned char header[8];*/
+    //unsigned char header[8];
     png_structp png_ptr;
     png_infop info_ptr;
     int color_type, num_channels;
