@@ -64,16 +64,23 @@ int addOverlay( t_rgb_image io_image, t_overlay i_overlay) {
     // add stronger blue component to pixels when overlay pixel is present
     for ( y=0; y<io_image.height; y++ ) {
         for ( x=0; x<io_image.width; x++ ) {
-            unsigned char curr_red = io_image.pixels[y][x].R;
-            unsigned char new_red = ( curr_red <= 0xa0 ) ? 0x00 : curr_red - 0xa0;
-            unsigned char curr_green = io_image.pixels[y][x].G;
-            unsigned char new_green = ( curr_green <= 0xa0 ) ? 0x00 : curr_green - 0xa0;
-            unsigned char curr_blue = io_image.pixels[y][x].B;
-            unsigned char new_blue = ( curr_blue >= 0xa0 ) ? 0xff : curr_blue + 0xa0;
             if ( i_overlay.overlay[y][x] ) {
-               io_image.pixels[y][x].R = new_red;
-               io_image.pixels[y][x].G = new_green;
-               io_image.pixels[y][x].B = new_blue;
+                unsigned char curr_red = io_image.pixels[y][x].R;
+                unsigned char curr_green = io_image.pixels[y][x].G;
+                unsigned char curr_blue = io_image.pixels[y][x].B;
+                unsigned char new_red, new_green, new_blue;
+                if ( BLUE == i_overlay.overlay[y][x] ) {
+                    new_red = ( curr_red <= 0xa0 ) ? 0x00 : curr_red - 0xa0;
+                    new_green = ( curr_green <= 0xa0 ) ? 0x00 : curr_green - 0xa0;
+                    new_blue = ( curr_blue >= 0xa0 ) ? 0xff : curr_blue + 0xa0;
+                } else if ( RED == i_overlay.overlay[y][x] ) {
+                    new_red = ( curr_red >= 0xa0 ) ? 0xff : curr_red + 0xa0;
+                    new_green = ( curr_green <= 0xa0 ) ? 0x00 : curr_green - 0xa0;
+                    new_blue = ( curr_blue <= 0xa0 ) ? 0x00 : curr_blue - 0xa0;
+                }
+                io_image.pixels[y][x].R = new_red;
+                io_image.pixels[y][x].G = new_green;
+                io_image.pixels[y][x].B = new_blue;
             }
         }
     } 
@@ -84,7 +91,7 @@ ERROR:
     return retCode;
 }
 
-int addCircle( t_overlay io_overlay, int x_coord, int y_coord, int radius) {
+int addCircle( t_overlay io_overlay, int x_coord, int y_coord, int radius, unsigned char color) {
     int x, y;
     int y_min, y_max, x_min, x_max;
 
@@ -99,7 +106,7 @@ int addCircle( t_overlay io_overlay, int x_coord, int y_coord, int radius) {
             float y_dist = y - y_coord;
             float square_dist = x_dist * x_dist + y_dist * y_dist;
             if ( square_dist <= ( radius * radius ) ) {
-                io_overlay.overlay[y][x] = 1;
+                io_overlay.overlay[y][x] = color;
             }
         }
     }
@@ -107,7 +114,7 @@ int addCircle( t_overlay io_overlay, int x_coord, int y_coord, int radius) {
     return 0;
 }
 
-int addSquare( t_overlay io_overlay, int x_coord, int y_coord, int side) {
+int addSquare( t_overlay io_overlay, int x_coord, int y_coord, int side, unsigned char color) {
     int x, y;
     int y_min, y_max, x_min, x_max;
     int half_side = side / 2;
@@ -119,7 +126,7 @@ int addSquare( t_overlay io_overlay, int x_coord, int y_coord, int side) {
 
     for ( y=y_min; y<y_max; y++ ) {
         for ( x=x_min; x<x_max; x++ ) {
-            io_overlay.overlay[y][x] = 1;
+            io_overlay.overlay[y][x] = color;
         }
     }
 

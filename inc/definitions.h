@@ -12,4 +12,8 @@
 #define MAX_LONGITUDE   180
 #define MAX_LATITUDE    85.05115 // preimage of PI of the latitude in mercator projection
 
+// overlay colors
+#define BLUE    1
+#define RED     2
+
 #endif /* _DEFINITIONS_H_ */
