@@ -107,7 +107,7 @@ int main( int argc, char **argv) {
             candidates[5*i+j].lat = center.lat + 0.005*j;
             CHECK( conv_spherical_to_image( center, 14, candidates[5*i+j].lng, candidates[5*i+j].lat, &x, &y));
             printf( "got coordinates x %d, y %d\n", x, y);
-            addCircle( overlay, x, y, 10);
+            addCircle( overlay, x, y, 10, RED);
         }
     }
 
