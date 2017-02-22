@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <curl/curl.h>
 #include <time.h>
 
 #include "image.h"
@@ -10,6 +9,7 @@
 #include "coordinates.h"
 #include "error.h"
 #include "definitions.h"
+#include "context.h"
 
 int printUsage( )
 {
@@ -75,7 +75,7 @@ int sampleImage( t_rgb_image *io_image) {
 int main( int argc, char **argv) {
     int retCode;
 
-    CURL *curl;
+    t_context context;
     t_point center;
     int i, j, x, y;
     char errorMessage[512] = {0};
@@ -85,16 +85,15 @@ int main( int argc, char **argv) {
     CHECK( retrieveArguments( argc-1, argv+1, &(center.lng), &(center.lat)));
     printf( "lon %f, lat %f\n", center.lng, center.lat);
 
+    // initialize context
+    CHECK( context_init( &context));
+
     // convert coordinates of center to image coordinates
     CHECK( conv_spherical_to_image( center, 14, center.lng + 0.01, center.lat + 0.01, &x, &y));
     printf( "x = %d, y=%d\n", x, y);
 
-    // initialize curl
-    curl = curl_easy_init();
-    if ( curl == NULL ) { CHECK( ERROR_CURL_INITIALIZE); }
-
     // get map centered on input point
-    CHECK( getMap( curl, center));
+    CHECK( getMap( context, center));
 
     // initialize overlay TODO create function
     overlay_init( &overlay);
@@ -118,9 +117,6 @@ int main( int argc, char **argv) {
 
     // export to png
     CHECK( rgbToPng( image, "map_overlay.png"));
-
-    // cleanup curl
-    curl_easy_cleanup( curl);
 
     // TODO : free memory -> init + term functions
     overlay_release( &overlay);

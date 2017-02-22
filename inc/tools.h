@@ -1,10 +1,9 @@
 #ifndef _TOOLS_H_
 #define _TOOLS_H_
 
-#include <stdlib.h>
-#include <curl/curl.h>
-
+#include "context.h"
 #include "structs.h"
+#include <stdlib.h>
 
 #define DEBUG 1
 
@@ -28,9 +27,9 @@ static inline int swapPoints( t_point *i_points, int i_posA, int i_posB) {
 }
 
 size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *o_dstBuffer);
-int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, int *o_time);
-int getMap( CURL *i_curl, t_point i_cener);
-int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVertices);
+int getDistance( t_context i_context, t_point i_start, t_point i_end, int *o_distance, int *o_time);
+int getMap( t_context i_context, t_point i_cener);
+int getAreaMap( t_context i_context, t_point i_center, t_point *i_polygon, int i_numVertices);
 int evalPoint( t_point i_pointToEval, t_point i_refPoint, float *o_value);
 int sortAngle( t_point *i_points, int i_numPoints, t_point i_refPoint);
 int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int *o_numVertices);
