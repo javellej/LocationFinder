@@ -1,7 +1,15 @@
 #ifndef _ERROR_H_
 #define _ERROR_H
 
-#define CHECK( EXP) do { retCode = (EXP); if ( retCode ) { goto ERROR; } } while ( 0 )
+#include <stdio.h>
+
+#define CHECK( EXP) do {                                                                                            \
+                        retCode = (EXP);                                                                            \
+                        if ( retCode ) {                                                                            \
+                            printf( "Exception raised in '%s' : file %s line %d\n", __func__, __FILE__, __LINE__);  \
+                            goto ERROR;                                                                             \
+                        }                                                                                           \
+                    } while ( 0 )
 
 #define ERROR_CURL_INITIALIZE   1
 #define ERROR_CURL_ERROR        2
