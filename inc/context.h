@@ -4,8 +4,6 @@
 #include <curl/curl.h>
 
 typedef struct { // TODO : add conversion coefficients
-    size_t image_width;
-    size_t image_height;
     CURL *curl;
 }t_context;
 

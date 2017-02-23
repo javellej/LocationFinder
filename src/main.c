@@ -88,14 +88,10 @@ int main( int argc, char **argv) {
     // initialize context
     CHECK( context_init( &context));
 
-    // convert coordinates of center to image coordinates
-    CHECK( conv_spherical_to_image( center, 14, center.lng + 0.01, center.lat + 0.01, &x, &y));
-    printf( "x = %d, y=%d\n", x, y);
-
     // get map centered on input point
     CHECK( getMap( context, center));
 
-    // initialize overlay TODO create function
+    // initialize overlay
     overlay_init( &overlay);
 
     // create grid queries
@@ -106,7 +102,7 @@ int main( int argc, char **argv) {
             candidates[5*i+j].lat = center.lat + 0.005*j;
             CHECK( conv_spherical_to_image( center, 14, candidates[5*i+j].lng, candidates[5*i+j].lat, &x, &y));
             printf( "got coordinates x %d, y %d\n", x, y);
-            addCircle( overlay, x, y, 10, RED);
+            addCircle( overlay, x, y, 10, BLUE);
         }
     }
 
@@ -114,12 +110,11 @@ int main( int argc, char **argv) {
     t_rgb_image image;
     CHECK( pngToRgb( "simple_map.png", &image));
     CHECK( addOverlay( image, overlay));
-
-    // export to png
     CHECK( rgbToPng( image, "map_overlay.png"));
 
     // TODO : free memory -> init + term functions
-    overlay_release( &overlay);
+    CHECK( overlay_release( &overlay));
+    CHECK( context_term( &context));
 
     return 0;
 
