@@ -29,7 +29,7 @@ size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_
 }
 
 /* PRE : "curl_easy_init" has been called */
-int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, int *o_time) {
+int getDistance( t_context i_context, t_point i_start, t_point i_end, int *o_distance, int *o_time) {
     int retCode;
 
     int curlRetCode;
@@ -49,11 +49,11 @@ int getDistance( CURL *i_curl, t_point i_start, t_point i_end, int *o_distance, 
 #endif
     initBuffer( &pageContent, 1);
     pageContent.m_size = 0;
-    curl_easy_setopt( i_curl, CURLOPT_URL, queryUrl);
-    curl_easy_setopt( i_curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt( i_curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, &pageContent);
-    curlRetCode = curl_easy_perform( i_curl);
+    curl_easy_setopt( i_context.curl, CURLOPT_URL, queryUrl);
+    curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, &pageContent);
+    curlRetCode = curl_easy_perform( i_context.curl);
     if ( curlRetCode ) { CHECK( ERROR_CURL_ERROR); }
 #if 0
     printf( "page content : %s\n", pageContent.m_data);
@@ -93,7 +93,7 @@ ERROR:
 /*
  * retrieve map centered on the given point
  */
-int getMap( CURL *i_curl, t_point i_center) {
+int getMap( t_context i_context, t_point i_center) {
     int retCode;
     FILE *f = fopen( "simple_map.png", "w");
     char query_url[512];
@@ -105,11 +105,11 @@ int getMap( CURL *i_curl, t_point i_center) {
     printf( "map query : %s\n", query_url);
 
     // get map centered on input point
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_URL, query_url));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_FOLLOWLOCATION, 1L));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEFUNCTION, NULL));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, f));
-    CHECK( curl_easy_perform( i_curl));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_URL, query_url));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, NULL));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, f));
+    CHECK( curl_easy_perform( i_context.curl));
 
     fclose( f);
 
@@ -122,7 +122,7 @@ ERROR:
 /*
  * retrieve map centered on the requested point with a highlighted polygonal area
  */
-int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVertices) {
+int getAreaMap( t_context i_context, t_point i_center, t_point *i_polygon, int i_numVertices) {
     int retCode;
     FILE *f = fopen( "map.png", "w");
     char *queryUrl = (char *) malloc( 205+26*(i_numVertices+1));
@@ -134,11 +134,11 @@ int getAreaMap( CURL *i_curl, t_point i_center, t_point *i_polygon, int i_numVer
     printf( "url polygon: %s\n", queryUrl);
 
     /* get image */
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_URL, queryUrl));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_FOLLOWLOCATION, 1L));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEFUNCTION, NULL));
-    CHECK( curl_easy_setopt( i_curl, CURLOPT_WRITEDATA, f));
-    CHECK( curl_easy_perform( i_curl));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_URL, queryUrl));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, NULL));
+    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, f));
+    CHECK( curl_easy_perform( i_context.curl));
 
     /* free memory */
     free( queryUrl);
