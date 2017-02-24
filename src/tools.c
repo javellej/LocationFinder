@@ -1,5 +1,6 @@
 #include "tools.h"
 #include "query.h"
+#include "coordinates.h"
 #include "error.h"
 #include "definitions.h"
 #include <curl/curl.h>
@@ -29,7 +30,7 @@ size_t write_callback( char *i_ptr, size_t i_size, size_t i_nmemb, t_buffer *io_
 }
 
 /* PRE : "curl_easy_init" has been called */
-int getDistance( t_context i_context, t_point i_start, t_point i_end, int *o_distance, int *o_time) {
+int getDistance( t_context *i_context, t_point i_start, t_point i_end, int *o_distance, int *o_time) {
     int retCode;
 
     int curlRetCode;
@@ -49,11 +50,11 @@ int getDistance( t_context i_context, t_point i_start, t_point i_end, int *o_dis
 #endif
     initBuffer( &pageContent, 1);
     pageContent.m_size = 0;
-    curl_easy_setopt( i_context.curl, CURLOPT_URL, queryUrl);
-    curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, &pageContent);
-    curlRetCode = curl_easy_perform( i_context.curl);
+    curl_easy_setopt( i_context->curl, CURLOPT_URL, queryUrl);
+    curl_easy_setopt( i_context->curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt( i_context->curl, CURLOPT_WRITEFUNCTION, write_callback);
+    curl_easy_setopt( i_context->curl, CURLOPT_WRITEDATA, &pageContent);
+    curlRetCode = curl_easy_perform( i_context->curl);
     if ( curlRetCode ) { CHECK( ERROR_CURL_ERROR); }
 #if 0
     printf( "page content : %s\n", pageContent.m_data);
@@ -93,23 +94,24 @@ ERROR:
 /*
  * retrieve map centered on the given point
  */
-int getMap( t_context i_context, t_point i_center) {
+int getMap( t_context *i_context) {
     int retCode;
     FILE *f = fopen( "simple_map.png", "w");
     char query_url[512];
+    t_point center = i_context->center;
 
     memset( query_url, 0, 512*sizeof( char));
 
     // get query string
-    pointQuery( i_center, query_url);
+    pointQuery( center, query_url);
     printf( "map query : %s\n", query_url);
 
     // get map centered on input point
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_URL, query_url));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, NULL));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, f));
-    CHECK( curl_easy_perform( i_context.curl));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_URL, query_url));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_FOLLOWLOCATION, 1L));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_WRITEFUNCTION, NULL));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_WRITEDATA, f));
+    CHECK( curl_easy_perform( i_context->curl));
 
     fclose( f);
 
@@ -122,23 +124,24 @@ ERROR:
 /*
  * retrieve map centered on the requested point with a highlighted polygonal area
  */
-int getAreaMap( t_context i_context, t_point i_center, t_point *i_polygon, int i_numVertices) {
+int getAreaMap( t_context *i_context, t_point *i_polygon, int i_numVertices) {
     int retCode;
+    t_point center = i_context->center;
     FILE *f = fopen( "map.png", "w");
     char *queryUrl = (char *) malloc( 205+26*(i_numVertices+1));
 
     memset( queryUrl, 0, 205+26*(i_numVertices+1));
 
     /* get query string */
-    polygonQuery( i_center, i_polygon, i_numVertices, queryUrl);
+    polygonQuery( center, i_polygon, i_numVertices, queryUrl);
     printf( "url polygon: %s\n", queryUrl);
 
     /* get image */
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_URL, queryUrl));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_FOLLOWLOCATION, 1L));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEFUNCTION, NULL));
-    CHECK( curl_easy_setopt( i_context.curl, CURLOPT_WRITEDATA, f));
-    CHECK( curl_easy_perform( i_context.curl));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_URL, queryUrl));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_FOLLOWLOCATION, 1L));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_WRITEFUNCTION, NULL));
+    CHECK( curl_easy_setopt( i_context->curl, CURLOPT_WRITEDATA, f));
+    CHECK( curl_easy_perform( i_context->curl));
 
     /* free memory */
     free( queryUrl);
@@ -271,6 +274,39 @@ int convexHull( t_point *i_points, int i_numPoints, t_point **o_convexHull, int 
     /* output values */
     *o_convexHull = convexHull;
     *o_numVertices = hullSize;
+
+    return 0;
+
+ERROR:
+    return retCode;
+}
+
+/*
+ * Get array of candidate points organized in a grid.
+ * The grid is centered on candidate and the size of the mesh is specified.
+ */
+int candidates_grid( t_context *i_context, size_t i_mesh_size, t_point **o_candidates, size_t *o_num_candidates) {
+    int retCode;
+    int x, y;
+    t_point *candidates = NULL;
+
+    size_t y_size = IMAGE_HEIGHT / i_mesh_size;
+    size_t x_size = IMAGE_WIDTH / i_mesh_size;
+    size_t num_candidates = y_size * x_size;
+    candidates = (t_point *) malloc( num_candidates * sizeof( t_point));
+    if ( NULL == candidates ) { CHECK( ERROR_MEMORY_ALLOCATION); }
+
+    for ( y=0; y<y_size; y++ ) {
+        for ( x=0; x<x_size; x++ ) {
+            float lng, lat;
+            CHECK( conv_image_to_spherical( i_context, x, y, &lng, &lat));
+            candidates[y*y_size+x].lng = lng;
+            candidates[y*y_size+x].lat = lat;
+        }
+    }
+
+    *o_candidates = candidates;
+    *o_num_candidates = num_candidates;
 
     return 0;
 

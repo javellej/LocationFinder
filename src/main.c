@@ -77,7 +77,6 @@ int main( int argc, char **argv) {
 
     t_context context;
     t_point center;
-    int i, j, x, y;
     char errorMessage[512] = {0};
     t_overlay overlay;
 
@@ -86,25 +85,18 @@ int main( int argc, char **argv) {
     printf( "lon %f, lat %f\n", center.lng, center.lat);
 
     // initialize context
-    CHECK( context_init( &context));
+    CHECK( context_init( &context, center, 14));
 
     // get map centered on input point
-    CHECK( getMap( context, center));
+    CHECK( getMap( &context));
 
     // initialize overlay
     overlay_init( &overlay);
 
     // create grid queries
-    t_point candidates[25];
-    for ( i=0; i<5; i++ ) {
-        for ( j=0; j<5; j++ ) {
-            candidates[5*i+j].lng = center.lng + 0.005*i;
-            candidates[5*i+j].lat = center.lat + 0.005*j;
-            CHECK( conv_spherical_to_image( center, 14, candidates[5*i+j].lng, candidates[5*i+j].lat, &x, &y));
-            printf( "got coordinates x %d, y %d\n", x, y);
-            addCircle( overlay, x, y, 10, BLUE);
-        }
-    }
+    t_point *candidates = NULL;
+    size_t num_candidates;
+    CHECK( candidates_grid( &context, 20, &candidates, &num_candidates));
 
     // create image and add overlay to it
     t_rgb_image image;
